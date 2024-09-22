@@ -1,0 +1,170 @@
+> data <- read.csv("CHOLERA_0000000002.csv")
+> > ls()
+[1] "data"      "file_path"
+> > library(readr)
+> CHOLERA_0000000002 <- read_csv("CHOLERA_0000000002.csv")
+Rows: 2375 Columns: 3                                            
+── Column specification ─────────────────────────────────────────
+Delimiter: ","
+chr (2): Countries, territories and areas, Number of reported...
+dbl (1): Year
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+> View(CHOLERA_0000000002)
+> library(readr)
+> CHOLERA_0000000002 <- read_csv("CHOLERA_0000000002.csv")
+Rows: 2375 Columns: 3                                            
+── Column specification ─────────────────────────────────────────
+Delimiter: ","
+chr (2): Countries, territories and areas, Number of reported...
+dbl (1): Year
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+> View(CHOLERA_0000000002)
+> cholera_data <- read.csv("CHOLERA_0000000002.csv")
+> > # View the first few rows and structure
+  > head(cholera_data)
+Countries..territories.and.areas Year
+1                      Afghanistan 2016
+2                      Afghanistan 2015
+3                      Afghanistan 2014
+4                      Afghanistan 2013
+5                      Afghanistan 2012
+6                      Afghanistan 2011
+Number.of.reported.deaths.from.cholera
+1                                      5
+2                                      8
+3                                      4
+4                                     14
+5                                      0
+6                                     44
+> str(cholera_data)
+'data.frame':	2375 obs. of  3 variables:
+  $ Countries..territories.and.areas      : chr  "Afghanistan" "Afghanistan" "Afghanistan" "Afghanistan" ...
+$ Year                                  : int  2016 2015 2014 2013 2012 2011 2010 2009 2008 2005 ...
+$ Number.of.reported.deaths.from.cholera: chr  "5" "8" "4" "14" ...
+> > # Check for missing values
+  > # Check for missing values and summarize the dataset
+  > summary(cholera_data)
+Countries..territories.and.areas      Year     
+Length:2375                      Min.   :1949  
+Class :character                 1st Qu.:1981  
+Mode  :character                 Median :1994  
+Mean   :1992  
+3rd Qu.:2005  
+Max.   :2016  
+Number.of.reported.deaths.from.cholera
+Length:2375                           
+Class :character                      
+Mode  :character           
+> # Summarize total cholera deaths by year
+  > cholera_trends <- cholera_data_clean %>%
+  +     group_by(Year) %>%
+  +     summarise(total_deaths = sum(Number.of.reported.deaths.from.cholera, na.rm = TRUE))
+> > # View the summary of deaths per year
+  > cholera_trends
+# A tibble: 68 × 2
+Year total_deaths
+<int>        <dbl>
+  1  1949            3
+2  1950        16133
+3  1951        58661
+4  1952        71397
+5  1953       141173
+6  1954        28835
+[38;5;250m 7  1955        17476
+  8  1956        32523
+  9  1957        54853
+  10  1958        61836
+  # ℹ 58 more rows
+  # ℹ Use `print(n = ...)` to see more rows
+  > > # Summarize total cholera deaths by country
+    > cholera_country <- cholera_data_clean %>%
+    +     group_by(Countries..territories.and.areas) %>%
+    +     summarise(total_deaths = sum(Number.of.reported.deaths.from.cholera, na.rm = TRUE))
+  > > # View the summary of deaths by country
+    > cholera_country
+  # A tibble: 161 × 2
+  Countries..territories.and.areas total_deaths
+  <chr>                                   <dbl>
+    1 Afghanistan                              2641
+  2 Albania                                    25
+  3 Algeria                                   650
+  4 Andorra                                     0
+  5 Angola                                   9920
+  6 Argentina                                  82
+  7 Armenia                                     0
+  8 Australia                                   0
+  9 Austria                                     0
+  10 Azerbaijan                                  0
+  # ℹ 151 more rows
+  # ℹ Use `print(n = ...)` to see more rows
+  > > # Plot total cholera deaths by country
+    > ggplot(cholera_country, aes(x = reorder(Countries..territories.and.areas, -total_deaths), y = total_deaths)) +
+    +     geom_bar(stat = "identity", fill = "steelblue") +
+    +     coord_flip() +
+    +     labs(title = "Total Cholera Deaths by Country",
+               +          x = "Country", y = "Total Deaths")
+  > > # Function to generate a report for a specific country
+    > generate_country_report <- function(country_name) {
+      +     country_data <- cholera_data_clean %>%
+        +         filter(Countries..territories.and.areas == country_name)
+      +     
+        +     total_deaths <- sum(country_data$Number.of.reported.deaths.from.cholera, na.rm = TRUE)
+        +     
+          +     significant_years <- country_data %>%
+            +         filter(Number.of.reported.deaths.from.cholera > 100) %>%
+            +         select(Year)
+          +     
+            +     # Print the report
+            +     cat("Country: ", country_name, "\n",
+                      +         "Total Deaths: ", total_deaths, "\n",
+                      +         "Significant Outbreak Years (Deaths > 100): ", paste(significant_years$Year, collapse = ", "), "\n")
+          + }
+  > # Pivot the data for the heatmap using dcast
+    > heatmap_data <- dcast(cholera_heatmap_data, Year ~ `Countries, territories and areas`, value.var = "total_deaths", fill = 0)
+  > > # Melt the data for ggplot
+    > heatmap_melted <- melt(heatmap_data, id.vars = "Year")
+  > > # Create the heatmap
+    > ggplot(heatmap_melted, aes(x = variable, y = Year, fill = value)) +
+    +     geom_tile() +
+    +     scale_fill_gradient(low = "white", high = "red") +
+    +     labs(title = "Cholera Deaths Heatmap by Year and Country",
+               +          x = "Country", y = "Year") +
+    +     theme_minimal() +
+    +     theme(axis.text.x = element_text(angle = 90, hjust = 1))
+  > > # Generate a report for "Algeria
+  Country:  Algeria 
+  Total Deaths:  650 
+  Significant Outbreak Years (Deaths > 100):  1975, 1971 
+  > > # Save the plot as an image (e.g., PNG)
+    > ggsave("cholera_deaths_over_time.png", plot = last_plot(), width = 8, height = 6)
+  > ggsave("cholera_deaths_by_country.png", plot = last_plot(), width = 8, height = 6)
+  > > # Filter data for Algeria
+    > algeria_data <- cholera_data_clean %>%
+    +     filter(`Countries, territories and areas` == "Algeria")
+  > > # Calculate total cholera deaths
+    > total_deaths <- sum(algeria_data$`Number of reported deaths from cholera`, na.rm = TRUE)
+  > > # Calculate total outbreak years
+    > total_outbreak_years <- n_distinct(algeria_data$Year)
+  > > # Find the most recent outbreak year
+    > most_recent_outbreak_year <- max(algeria_data$Year, na.rm = TRUE)
+  > > # Find the highest recorded deaths in a single year
+    > highest_deaths_info <- algeria_data %>%
+    +     filter(`Number of reported deaths from cholera` == max(`Number of reported deaths from cholera`, na.rm = TRUE)) %>%
+    +     select(Year, `Number of reported deaths from cholera`)
+  > > # Extracting the year and highest deaths
+    > highest_recorded_deaths_year <- highest_deaths_info$Year
+  > highest_recorded_deaths <- highest_deaths_info$`Number of reported deaths from cholera`
+  > > # Display the results
+    > cat("Total Cholera Deaths:", total_deaths, "\n")
+  Total Cholera Deaths: 650 
+  > cat("Total Outbreak Years:", total_outbreak_years, "\n")
+  Total Outbreak Years: 20 
+  > cat("Most Recent Outbreak Year:", most_recent_outbreak_year, "\n")
+  Most Recent Outbreak Year: 2006 
+  > cat("Highest Recorded Deaths in a Single Year:", highest_recorded_deaths_year, "-", highest_recorded_deaths, "\n")
+  Highest Recorded Deaths in a Single Year: 1975 - 118 
+  > > # Plot total outbreaks by country
